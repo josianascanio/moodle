@@ -85,7 +85,7 @@ w_checklist() {
   shift 2
 
   local result
-  result=$(whiptail --title "$title" --checklist "$text" 24 100 15 "$@" 3>&1 1>&2 2>&3)
+  result=$(whiptail --title "$title" --checklist "$text" 25 105 16 "$@" 3>&1 1>&2 2>&3)
   abort_if_cancel $?
   echo "$result"
 }
@@ -180,6 +180,40 @@ ensure_postgresql_16_repo_if_needed() {
     > /etc/apt/sources.list.d/pgdg.list
 
   apt update -y
+}
+
+apply_secure_permissions() {
+  step "Aplicando permisos seguros"
+
+  chown -R root:root "$MOODLE_CODE_FOLDER"
+  find "$MOODLE_CODE_FOLDER" -type d -exec chmod 755 {} \; || true
+  find "$MOODLE_CODE_FOLDER" -type f -exec chmod 644 {} \; || true
+
+  chown -R www-data:www-data "$MOODLE_DATA_FOLDER"
+  find "$MOODLE_DATA_FOLDER" -type d -exec chmod 700 {} \; || true
+  find "$MOODLE_DATA_FOLDER" -type f -exec chmod 600 {} \; || true
+
+  if [[ -f "$MOODLE_CODE_FOLDER/config.php" ]]; then
+    chown root:www-data "$MOODLE_CODE_FOLDER/config.php"
+    chmod 640 "$MOODLE_CODE_FOLDER/config.php"
+  fi
+}
+
+apply_web_writable_permissions() {
+  step "Aplicando permisos para instalar plugins desde la interfaz web"
+
+  chown -R www-data:www-data "$MOODLE_CODE_FOLDER"
+  find "$MOODLE_CODE_FOLDER" -type d -exec chmod 755 {} \; || true
+  find "$MOODLE_CODE_FOLDER" -type f -exec chmod 644 {} \; || true
+
+  chown -R www-data:www-data "$MOODLE_DATA_FOLDER"
+  find "$MOODLE_DATA_FOLDER" -type d -exec chmod 700 {} \; || true
+  find "$MOODLE_DATA_FOLDER" -type f -exec chmod 600 {} \; || true
+
+  if [[ -f "$MOODLE_CODE_FOLDER/config.php" ]]; then
+    chown www-data:www-data "$MOODLE_CODE_FOLDER/config.php"
+    chmod 640 "$MOODLE_CODE_FOLDER/config.php"
+  fi
 }
 
 # ============================================================
@@ -365,7 +399,8 @@ OPTIONS="$(w_checklist "Acciones y dependencias" "Selecciona qué quieres instal
   "postgresql"          "Instalar PostgreSQL 16" ON \
   "create_db"           "Crear base de datos y usuario automáticamente" ON \
   "cli_install"         "Instalar Moodle por CLI y generar config.php" ON \
-  "cron"                "Crear cron de Moodle para www-data cada minuto" ON
+  "cron"                "Crear cron de Moodle para www-data cada minuto" ON \
+  "web_plugins"         "Permitir instalar plugins desde la interfaz web" OFF
 )"
 
 INSTALL_ANY="yes"
@@ -378,6 +413,7 @@ DISABLE_DEFAULT_SITE="no"
 CREATE_DB="no"
 RUN_CLI_INSTALL="no"
 CREATE_CRON="no"
+ALLOW_WEB_PLUGINS="no"
 
 if option_enabled "$OPTIONS" "apache_conf"; then
   CREATE_APACHE_CONF="yes"
@@ -397,6 +433,10 @@ fi
 
 if option_enabled "$OPTIONS" "cron"; then
   CREATE_CRON="yes"
+fi
+
+if option_enabled "$OPTIONS" "web_plugins"; then
+  ALLOW_WEB_PLUGINS="yes"
 fi
 
 # ============================================================
@@ -572,11 +612,6 @@ if command -v composer >/dev/null 2>&1; then
   fi
 fi
 
-step "Asignando permisos al código Moodle"
-chown -R root:root "$MOODLE_CODE_FOLDER"
-find "$MOODLE_CODE_FOLDER" -type d -exec chmod 755 {} \; || true
-find "$MOODLE_CODE_FOLDER" -type f -exec chmod 644 {} \; || true
-
 # ============================================================
 # 8) Base de datos PostgreSQL
 # ============================================================
@@ -685,11 +720,6 @@ if [[ "$RUN_CLI_INSTALL" == "yes" ]]; then
     --adminemail="$ADMIN_EMAIL" \
     --non-interactive \
     --agree-license
-
-  if [[ -f "$MOODLE_CODE_FOLDER/config.php" ]]; then
-    chown root:www-data "$MOODLE_CODE_FOLDER/config.php"
-    chmod 640 "$MOODLE_CODE_FOLDER/config.php"
-  fi
 else
   step "Saltando instalación CLI"
   echo "Puedes completar la instalación desde el navegador:"
@@ -697,7 +727,16 @@ else
 fi
 
 # ============================================================
-# 11) Cron Moodle
+# 11) Permisos finales
+# ============================================================
+if [[ "$ALLOW_WEB_PLUGINS" == "yes" ]]; then
+  apply_web_writable_permissions
+else
+  apply_secure_permissions
+fi
+
+# ============================================================
+# 12) Cron Moodle
 # ============================================================
 if [[ "$CREATE_CRON" == "yes" ]]; then
   step "Configurando cron de Moodle"
@@ -716,7 +755,7 @@ if [[ "$CREATE_CRON" == "yes" ]]; then
 fi
 
 # ============================================================
-# 12) Reinicios finales
+# 13) Reinicios finales
 # ============================================================
 step "Reiniciando servicios"
 
@@ -731,8 +770,14 @@ if systemctl list-unit-files | grep -q postgresql.service; then
 fi
 
 # ============================================================
-# 13) Resultado
+# 14) Resultado
 # ============================================================
+PERMISSION_MSG="Modo seguro: código Moodle propiedad de root. Para instalar plugins desde la interfaz, cambia permisos temporalmente o ejecuta el script marcando la opción de plugins."
+
+if [[ "$ALLOW_WEB_PLUGINS" == "yes" ]]; then
+  PERMISSION_MSG="Modo plugins web: código Moodle propiedad de www-data. Puedes instalar plugins desde la interfaz web, pero es menos seguro para producción."
+fi
+
 FINAL_MSG="Instalación finalizada.
 
 Sitio:
@@ -760,6 +805,9 @@ Apache config:
 Cron:
   Usuario www-data
   ${MOODLE_CODE_FOLDER}/admin/cli/cron.php
+
+Permisos:
+  $PERMISSION_MSG
 "
 
 echo "$FINAL_MSG"
