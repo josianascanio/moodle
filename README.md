@@ -70,3 +70,20 @@ Si durante la instalación colocaste como `WEBSITE_ADDRESS` una IP, por ejemplo:
 ```text
 192.168.18.189
 ```
+
+---
+
+## 🧩 Plugin MCP Content Tools
+
+Este repositorio incluye un plugin local opcional en `local/mcpcontent` para crear contenido básico desde el MCP de Moodle.
+
+Funciones que agrega al servicio web:
+
+- `local_mcpcontent_create_label`
+- `local_mcpcontent_create_page`
+- `local_mcpcontent_create_url`
+- `local_mcpcontent_update_sections`
+
+Uso recomendado: instalar el plugin en Moodle, ejecutar el upgrade, agregar esas funciones al External Service usado por MCP y asignar al usuario MCP la capacidad `local/mcpcontent:createcontent` junto con `moodle/course:manageactivities`.
+
+Ver instrucciones completas en `local/mcpcontent/README.md`.
