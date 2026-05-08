@@ -73,9 +73,18 @@ Si durante la instalación colocaste como `WEBSITE_ADDRESS` una IP, por ejemplo:
 
 ---
 
-## 🧩 Plugin MCP Content Tools
+## 🧩 Moodle MCP
 
-Este repositorio incluye un plugin local opcional en `local/mcpcontent` para crear contenido básico desde el MCP de Moodle.
+Este repositorio incluye los artefactos necesarios para conectar Moodle por MCP y crear contenido basico desde herramientas compatibles con MCP.
+
+Orden de instalacion:
+
+1. Instalar `artifacts/plugins/webservice_mcp_moodle51_2025121302.zip` para habilitar MCP en Moodle.
+2. Instalar `artifacts/plugins/local_mcpcontent.zip` para crear paginas, URLs, etiquetas y renombrar secciones desde MCP.
+3. Importar el rol `artifacts/roles/cursomcp.xml` o crear el rol manualmente.
+4. Configurar el servicio externo MCP, usuario autorizado y token.
+
+El codigo fuente del plugin local esta en `local/mcpcontent`.
 
 Funciones que agrega al servicio web:
 
@@ -84,6 +93,6 @@ Funciones que agrega al servicio web:
 - `local_mcpcontent_create_url`
 - `local_mcpcontent_update_sections`
 
-Uso recomendado: instalar el plugin en Moodle, ejecutar el upgrade, agregar esas funciones al External Service usado por MCP y asignar al usuario MCP la capacidad `local/mcpcontent:createcontent` junto con `moodle/course:manageactivities`.
+Uso recomendado: instalar ambos plugins, ejecutar el upgrade, agregar las funciones necesarias al External Service usado por MCP y asignar al usuario MCP el rol importado.
 
-Ver instrucciones completas en `local/mcpcontent/README.md`.
+Ver instrucciones completas en `README_MCP_MOODLE.md`.

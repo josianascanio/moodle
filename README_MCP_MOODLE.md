@@ -7,6 +7,24 @@ Esta configuracion usa dos plugins:
 - Plugin oficial MCP: `webservice_mcp`
 - Plugin local de contenido: `local_mcpcontent`
 
+## Archivos del Repositorio
+
+Los artefactos instalables estan organizados asi:
+
+```text
+artifacts/plugins/webservice_mcp_moodle51_2025121302.zip
+artifacts/plugins/local_mcpcontent.zip
+artifacts/roles/cursomcp.xml
+local/mcpcontent/
+```
+
+Uso de cada archivo:
+
+- `artifacts/plugins/webservice_mcp_moodle51_2025121302.zip`: plugin oficial que habilita MCP en Moodle. Instalar primero.
+- `artifacts/plugins/local_mcpcontent.zip`: plugin local creado para poder crear paginas, URLs, etiquetas y renombrar secciones desde MCP. Instalar despues del plugin oficial.
+- `artifacts/roles/cursomcp.xml`: rol exportado para importar permisos MCP rapidamente.
+- `local/mcpcontent/`: codigo fuente del plugin local, util para modificarlo o regenerar el ZIP.
+
 ## 1. Requisitos
 
 - Moodle instalado y funcionando.
@@ -28,12 +46,12 @@ MCP endpoint: http://192.168.2.39/webservice/mcp/server.php?wstoken=TOKEN
 Ejecutar la configuracion en este orden:
 
 1. Instalar Moodle y confirmar que el sitio responde.
-2. Instalar el plugin oficial `webservice_mcp`.
-3. Instalar el plugin local `local_mcpcontent`.
+2. Instalar `artifacts/plugins/webservice_mcp_moodle51_2025121302.zip`.
+3. Instalar `artifacts/plugins/local_mcpcontent.zip`.
 4. Habilitar Web Services en Moodle.
 5. Habilitar el protocolo `Model Context Protocol (MCP)`.
 6. Crear el usuario dedicado MCP.
-7. Importar el rol MCP exportado o crear el rol manualmente.
+7. Importar `artifacts/roles/cursomcp.xml` o crear el rol manualmente.
 8. Asignar el rol MCP al usuario.
 9. Crear el servicio externo MCP.
 10. Agregar las funciones webservice necesarias al servicio.
@@ -45,10 +63,16 @@ Ejecutar la configuracion en este orden:
 
 ## 2. Instalar Plugin Oficial MCP
 
-Instalar desde el directorio oficial de plugins Moodle:
+Instalar desde este archivo:
 
 ```text
-webservice_mcp
+artifacts/plugins/webservice_mcp_moodle51_2025121302.zip
+```
+
+Este plugin debe instalarse primero porque agrega el protocolo MCP y el endpoint:
+
+```text
+/webservice/mcp/server.php
 ```
 
 Luego ir a:
@@ -68,7 +92,7 @@ Model Context Protocol (MCP)
 El ZIP instalable esta en este repositorio:
 
 ```text
-local_mcpcontent.zip
+artifacts/plugins/local_mcpcontent.zip
 ```
 
 Instalar desde Moodle:
@@ -81,7 +105,7 @@ Seleccionar:
 
 ```text
 Tipo de plugin: Local plugin
-Archivo: local_mcpcontent.zip
+Archivo: artifacts/plugins/local_mcpcontent.zip
 ```
 
 El plugin agrega funciones webservice propias para crear contenido que el plugin MCP oficial no podia crear directamente.
@@ -132,7 +156,7 @@ Si ya tienes el rol exportado desde otra instancia Moodle, normalmente el archiv
 Este repositorio incluye un rol exportado de referencia:
 
 ```text
-cursomcp.xml
+artifacts/roles/cursomcp.xml
 ```
 
 Ruta:
