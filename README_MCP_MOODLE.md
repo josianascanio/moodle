@@ -21,7 +21,7 @@ local/mcpcontent/
 Uso de cada archivo:
 
 - `artifacts/plugins/webservice_mcp_moodle51_2025121302.zip`: plugin oficial que habilita MCP en Moodle. Instalar primero.
-- `artifacts/plugins/local_mcpcontent.zip`: plugin local creado para poder crear paginas, URLs, etiquetas y renombrar secciones desde MCP. Instalar despues del plugin oficial.
+- `artifacts/plugins/local_mcpcontent.zip`: plugin local creado para poder crear paginas, URLs, etiquetas, quizzes, preguntas y renombrar secciones desde MCP. Instalar despues del plugin oficial.
 - `artifacts/roles/cursomcp.xml`: rol exportado para importar permisos MCP rapidamente.
 - `local/mcpcontent/`: codigo fuente del plugin local, util para modificarlo o regenerar el ZIP.
 
@@ -184,6 +184,10 @@ local/mcpcontent:createcontent
 moodle/course:create
 moodle/course:update
 moodle/course:manageactivities
+mod/quiz:addinstance
+moodle/question:add
+moodle/question:useall
+mod/quiz:manage
 moodle/category:manage
 ```
 
@@ -223,7 +227,7 @@ Para pruebas se puede asignar a nivel sistema. Para produccion, preferir categor
 
 ## 9. Permisos del Rol
 
-Estos son los permisos usados para que MCP pueda crear categorias, cursos, secciones y contenido basico.
+Estos son los permisos usados para que MCP pueda crear categorias, cursos, secciones, contenido basico y cuestionarios tipo quiz.
 
 ### Permisos MCP
 
@@ -250,6 +254,12 @@ moodle/course:changesummary = Allow
 moodle/course:changecategory = Allow
 moodle/course:sectionvisibility = Allow
 moodle/course:activityvisibility = Allow
+mod/quiz:addinstance = Allow
+mod/quiz:manage = Allow
+mod/quiz:view = Allow
+moodle/question:add = Allow
+moodle/question:useall = Allow
+moodle/question:viewall = Allow
 ```
 
 ### Permisos opcionales usados por algunas funciones expuestas
@@ -345,12 +355,19 @@ mod_url_view_url
 
 ### Funciones del plugin local `local_mcpcontent`
 
-Estas son las funciones clave para crear contenido real y renombrar secciones:
+Estas son las funciones clave para crear contenido real, configurar quizzes y renombrar secciones:
 
 ```text
 local_mcpcontent_create_label
 local_mcpcontent_create_page
 local_mcpcontent_create_url
+local_mcpcontent_create_quiz
+local_mcpcontent_update_quiz_settings
+local_mcpcontent_create_question_category
+local_mcpcontent_create_multichoice_question
+local_mcpcontent_create_truefalse_question
+local_mcpcontent_create_shortanswer_question
+local_mcpcontent_add_question_to_quiz
 local_mcpcontent_update_sections
 ```
 
@@ -439,6 +456,13 @@ Confirmar que aparecen:
 local_mcpcontent_create_label
 local_mcpcontent_create_page
 local_mcpcontent_create_url
+local_mcpcontent_create_quiz
+local_mcpcontent_update_quiz_settings
+local_mcpcontent_create_question_category
+local_mcpcontent_create_multichoice_question
+local_mcpcontent_create_truefalse_question
+local_mcpcontent_create_shortanswer_question
+local_mcpcontent_add_question_to_quiz
 local_mcpcontent_update_sections
 ```
 
@@ -486,6 +510,131 @@ local_mcpcontent_update_sections
     "name": "Documentacion Moodle",
     "externalurl": "https://docs.moodle.org/",
     "intro": "<p>Referencia externa.</p>",
+    "visible": true
+  }
+}
+```
+
+### Crear cuestionario real tipo Quiz
+
+`timelimit` se expresa en segundos. Para 15 minutos usar `900`.
+
+```json
+{
+  "name": "local_mcpcontent_create_quiz",
+  "arguments": {
+    "courseid": 2,
+    "sectionid": 2,
+    "name": "Cuestionario - Arquitectura del entorno",
+    "intro": "<p>Responde las preguntas de comprensión de la unidad.</p>",
+    "timelimit": 900,
+    "attempts": 2,
+    "grade": 100,
+    "gradepass": 80,
+    "questionsperpage": 1,
+    "shuffleanswers": true,
+    "visible": true
+  }
+}
+```
+
+La funcion crea el cuestionario real y ajusta descripcion, temporizador, intentos, nota maxima y nota minima para aprobar. Luego se pueden crear categorias y preguntas con las funciones `local_mcpcontent_create_*_question`, usando `addtoquizcmid` para agregarlas directamente al quiz.
+
+### Crear categoria de preguntas
+
+```json
+{
+  "name": "local_mcpcontent_create_question_category",
+  "arguments": {
+    "courseid": 2,
+    "name": "Unidad 1 - Arquitectura",
+    "info": "<p>Preguntas de comprension de arquitectura.</p>"
+  }
+}
+```
+
+### Crear pregunta de opcion multiple y agregarla al quiz
+
+```json
+{
+  "name": "local_mcpcontent_create_multichoice_question",
+  "arguments": {
+    "courseid": 2,
+    "categoryid": 10,
+    "name": "Funcion de Docker",
+    "questiontext": "<p>Que funcion cumple Docker en este entorno?</p>",
+    "answers": [
+      {"text": "Ejecutar servicios en contenedores", "fraction": 1, "feedback": "Correcto."},
+      {"text": "Editar archivos de texto", "fraction": 0, "feedback": "Incorrecto."},
+      {"text": "Administrar certificados", "fraction": 0, "feedback": "Incorrecto."}
+    ],
+    "addtoquizcmid": 25,
+    "maxmark": 1
+  }
+}
+```
+
+### Crear pregunta verdadero/falso y agregarla al quiz
+
+```json
+{
+  "name": "local_mcpcontent_create_truefalse_question",
+  "arguments": {
+    "courseid": 2,
+    "categoryid": 10,
+    "name": "Instalacion productiva",
+    "questiontext": "<p>El curso deja una instalacion lista para produccion.</p>",
+    "correctanswer": false,
+    "feedbackfalse": "Correcto. Es una base de prueba.",
+    "addtoquizcmid": 25
+  }
+}
+```
+
+### Crear pregunta de respuesta corta y agregarla al quiz
+
+```json
+{
+  "name": "local_mcpcontent_create_shortanswer_question",
+  "arguments": {
+    "courseid": 2,
+    "categoryid": 10,
+    "name": "Comando contenedores activos",
+    "questiontext": "<p>Que comando muestra los contenedores activos?</p>",
+    "answers": [
+      {"text": "docker ps", "fraction": 1, "feedback": "Correcto."}
+    ],
+    "addtoquizcmid": 25
+  }
+}
+```
+
+### Agregar pregunta existente a un quiz
+
+```json
+{
+  "name": "local_mcpcontent_add_question_to_quiz",
+  "arguments": {
+    "cmid": 25,
+    "questionid": 100,
+    "maxmark": 1
+  }
+}
+```
+
+### Ajustar configuracion de un cuestionario existente
+
+Usar `cmid`, no el `instanceid` del quiz.
+
+```json
+{
+  "name": "local_mcpcontent_update_quiz_settings",
+  "arguments": {
+    "cmid": 25,
+    "intro": "<p>Cuestionario actualizado desde MCP.</p>",
+    "timelimit": 900,
+    "attempts": 2,
+    "gradepass": 80,
     "visible": true
   }
 }
@@ -544,7 +693,7 @@ Revisar:
 
 ### No crea contenido
 
-El plugin MCP oficial puede listar y leer modulos, pero algunos recursos (`page`, `url`, `label`, `resource`) no soportan `quick creation` con `core_courseformat_new_module`.
+El plugin MCP oficial puede listar y leer modulos, pero algunos recursos y actividades (`page`, `url`, `label`, `resource`, `quiz`) no soportan `quick creation` con `core_courseformat_new_module`.
 
 Para eso se usan las funciones del plugin local:
 
@@ -552,7 +701,11 @@ Para eso se usan las funciones del plugin local:
 local_mcpcontent_create_label
 local_mcpcontent_create_page
 local_mcpcontent_create_url
+local_mcpcontent_create_quiz
+local_mcpcontent_update_quiz_settings
 ```
+
+Si las funciones de quiz o preguntas no aparecen, revisar que el plugin local este actualizado a la version `0.3.0` o superior, que Moodle haya ejecutado el upgrade y que esas funciones se hayan agregado al servicio externo MCP.
 
 ### No renombra secciones
 

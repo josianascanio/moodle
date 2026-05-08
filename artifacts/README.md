@@ -9,7 +9,7 @@ Instalar en este orden:
 1. `plugins/webservice_mcp_moodle51_2025121302.zip`
 2. `plugins/local_mcpcontent.zip`
 
-El primer ZIP instala el protocolo MCP oficial en Moodle. El segundo ZIP instala las funciones locales para crear contenido y renombrar secciones desde MCP.
+El primer ZIP instala el protocolo MCP oficial en Moodle. El segundo ZIP instala las funciones locales para crear contenido, configurar quizzes, crear preguntas y renombrar secciones desde MCP.
 
 ## Roles
 

@@ -80,7 +80,7 @@ Este repositorio incluye los artefactos necesarios para conectar Moodle por MCP 
 Orden de instalacion:
 
 1. Instalar `artifacts/plugins/webservice_mcp_moodle51_2025121302.zip` para habilitar MCP en Moodle.
-2. Instalar `artifacts/plugins/local_mcpcontent.zip` para crear paginas, URLs, etiquetas y renombrar secciones desde MCP.
+2. Instalar `artifacts/plugins/local_mcpcontent.zip` para crear paginas, URLs, etiquetas, quizzes, preguntas y renombrar secciones desde MCP.
 3. Importar el rol `artifacts/roles/cursomcp.xml` o crear el rol manualmente.
 4. Configurar el servicio externo MCP, usuario autorizado y token.
 
@@ -91,6 +91,13 @@ Funciones que agrega al servicio web:
 - `local_mcpcontent_create_label`
 - `local_mcpcontent_create_page`
 - `local_mcpcontent_create_url`
+- `local_mcpcontent_create_quiz`
+- `local_mcpcontent_update_quiz_settings`
+- `local_mcpcontent_create_question_category`
+- `local_mcpcontent_create_multichoice_question`
+- `local_mcpcontent_create_truefalse_question`
+- `local_mcpcontent_create_shortanswer_question`
+- `local_mcpcontent_add_question_to_quiz`
 - `local_mcpcontent_update_sections`
 
 Uso recomendado: instalar ambos plugins, ejecutar el upgrade, agregar las funciones necesarias al External Service usado por MCP y asignar al usuario MCP el rol importado.
